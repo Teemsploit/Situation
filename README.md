@@ -1,6 +1,6 @@
 # Situation Console Admin System
 
-A console application with an always-visible window designed for basic administrative tasks. This script sets up a minimal command framework with logging and a command list.
+A console application designed for basic administrative tasks.
 
 ## Usage
 
