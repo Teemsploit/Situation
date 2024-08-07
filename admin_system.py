@@ -16,7 +16,7 @@ from difflib import get_close_matches
 colorama.init()
 
 if os.name == 'nt':  # Windows
-    APPDATA = os.getenv("APPDATA', 'C:\\Users\\Default\\AppData\\Roaming")
+    APPDATA = os.getenv('APPDATA', 'C:\\Users\\Default\\AppData\\Roaming')
 else:  # macOS/Linux
     directory = os.path.expanduser("~/Library/Application Support/Situation/")
     if not os.path.exists(directory):
@@ -24,15 +24,11 @@ else:  # macOS/Linux
             os.makedirs(directory)
         except Exception as e:
             print(f"{colorama.Fore.RED + colorama.Style.BRIGHT}Error: {colorama.Style.DIM}{e}{colorama.Style.RESET_ALL}")
-    else:
-        pass
     APPDATA = directory
-    APPDATA = os.path.expanduser("~/Library/Application Support/Situation/")
 
 LOG_FILE_PATH = os.path.join(APPDATA, 'situation.log')
 logging.basicConfig(filename=LOG_FILE_PATH, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-SW_SHOW = 5
 if os.name == 'nt':
     user32 = ctypes.windll.user32
     kernel32 = ctypes.windll.kernel32
@@ -125,13 +121,12 @@ def create_folder(args):
         confirmation = input(f"Do you want to overwrite it? (y/[N]): {colorama.Style.RESET_ALL}")
         if confirmation.lower() != 'y':
             return
-        else:
-            try:
-                os.makedirs(path)
-                print(f"Folder \"{path}\" created.")
-            except Exception as e:
-                print(f"{colorama.Fore.RED + colorama.Style.BRIGHT}Error: {colorama.Style.DIM}{e}{colorama.Style.RESET_ALL}")
-                logging.error(f"Error creating folder {path}: {e}")
+    try:
+        os.makedirs(path)
+        print(f"Folder \"{path}\" created.")
+    except Exception as e:
+        print(f"{colorama.Fore.RED + colorama.Style.BRIGHT}Error: {colorama.Style.DIM}{e}{colorama.Style.RESET_ALL}")
+        logging.error(f"Error creating folder {path}: {e}")
 
 def delete_folder(args):
     if len(args) < 1:
@@ -153,11 +148,10 @@ def run_batch_script(args):
     try:
         if os.name == 'nt':
             subprocess.run(script_path, shell=True, check=True)
-            print(f"{colorama.Fore.GREEN}Script {script_path} executed successfully.{colorama.Style.RESET_ALL}")
         else:
             subprocess.run(['chmod', '+x', script_path])
-            subprocess.run("./" + script_path, shell=True, check=True)
-            print(f"{colorama.Fore.GREEN}Script {script_path} executed successfully.{colorama.Style.RESET_ALL}")
+            subprocess.run(["./" + script_path], shell=True, check=True)
+        print(f"{colorama.Fore.GREEN}Script {script_path} executed successfully.{colorama.Style.RESET_ALL}")
     except subprocess.CalledProcessError as e:
         print(f"{colorama.Fore.RED + colorama.Style.BRIGHT}Error running script: {colorama.Style.DIM}{e}{colorama.Style.RESET_ALL}")
         logging.error(f"Error running script {script_path}: {e}")
@@ -185,10 +179,22 @@ def download_command(args):
         logging.error(f"Error downloading file from {url}: {e}")
 
 def ip_command(args):
-    response = requests.get('https://api.ipify.org?format=json')
-    data = response.json()
-    ip = data['ip']
-    local_ip = socket.gethostbyname(socket.gethostname())
+    try:
+        response = requests.get('https://api.ipify.org?format=json')
+        data = response.json()
+        ip = data['ip']
+    except Exception as e:
+        print(f"{colorama.Fore.RED + colorama.Style.BRIGHT}Error fetching public IP: {colorama.Style.DIM}{e}{colorama.Style.RESET_ALL}")
+        logging.error(f"Error fetching public IP: {e}")
+        ip = "Unavailable"
+
+    try:
+        local_ip = socket.gethostbyname(socket.gethostname())
+    except Exception as e:
+        print(f"{colorama.Fore.RED + colorama.Style.BRIGHT}Error fetching local IP: {colorama.Style.DIM}{e}{colorama.Style.RESET_ALL}")
+        logging.error(f"Error fetching local IP: {e}")
+        local_ip = "Unavailable"
+    
     print(f"{colorama.Fore.GREEN}Your public IP is: {colorama.Style.RESET_ALL}{ip}")
     print(f"{colorama.Fore.GREEN}Your local IP is: {colorama.Style.RESET_ALL}{local_ip}")
 
@@ -205,6 +211,7 @@ def suggest_command(input_cmd, commands):
     return close_matches[0] if close_matches else None
 
 # function, description, usage
+# Register a new command: commands['EXAMPLE'] = (COMMAND_FUNCTION, "Brief description of what the command does", "example [optional arguments]")
 commands['help'] = (help_command, "Shows available commands and usage", "help")
 commands['clear'] = (clear_command, "Clears the terminal screen", "clear")
 commands['list'] = (list_files, "Lists files in the specified directory", "list [directory]")
@@ -243,8 +250,6 @@ def main():
                     else:
                         print(f"{colorama.Fore.RED}Unknown command:{colorama.Style.RESET_ALL} {command}")
                         print(f"{colorama.Fore.RED}For a list of commands run:{colorama.Style.RESET_ALL} help")
-
-                    
         except KeyboardInterrupt:
             if os.name == 'nt':
                 os.system('cls')
