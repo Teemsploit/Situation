@@ -12,6 +12,7 @@ import colorama
 import sys
 import requests
 from difflib import get_close_matches
+import importlib.util
 
 colorama.init()
 
@@ -210,6 +211,18 @@ def suggest_command(input_cmd, commands):
     close_matches = get_close_matches(input_cmd, commands.keys(), n=1, cutoff=0.6)
     return close_matches[0] if close_matches else None
 
+def load_plugins(directory):
+    if not os.path.isdir(directory):
+        return
+    for filename in os.listdir(directory):
+        if filename.endswith('.py'):
+            filepath = os.path.join(directory, filename)
+            spec = importlib.util.spec_from_file_location(filename[:-3], filepath)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            if hasattr(module, 'register'):
+                module.register(commands)
+
 # function, description, usage
 # Register a new command: commands['EXAMPLE'] = (COMMAND_FUNCTION, "Brief description of what the command does", "example [optional arguments]")
 commands['help'] = (help_command, "Shows available commands and usage", "help")
@@ -232,6 +245,10 @@ def main():
     else:
         os.system('clear')
     print(colorama.Fore.GREEN + colorama.Style.BRIGHT + "Welcome to Situation. Type 'help' for a list of commands." + colorama.Style.RESET_ALL)
+
+    plugin_directory = os.path.join(APPDATA, 'plugins')
+    load_plugins(plugin_directory)
+
     while True:
         try:
             user_input = input(colorama.Fore.CYAN + "> " + colorama.Style.RESET_ALL)
