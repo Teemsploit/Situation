@@ -36,6 +36,16 @@ if os.name == 'nt':
 
 commands = {}
 
+def loadstring(code):
+    def func(globals=None, locals=None):
+        if globals is None:
+            globals = {}
+        if locals is None:
+            locals = globals
+        exec(code, globals, locals)
+        return locals
+    return func
+
 def split(input_str, sep=" "):
     if not input_str:
         return []
